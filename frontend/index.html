@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat entre potes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login">
+    <input type="password" id="password" placeholder="Mot de passe">
+    <button onclick="login()">Entrer</button>
+  </div>
+
+  <div id="chat" hidden>
+    <div id="messages"></div>
+    <input id="msg" placeholder="Message">
+    <button onclick="sendMsg()">Envoyer</button>
+    <button onclick="startCall()">🎧 Vocal</button>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
