@@ -1,0 +1,12 @@
+.user {
+  padding: 6px;
+  margin: 4px;
+  background: #222;
+  color: white;
+  border-radius: 6px;
+}
+
+.user.talking {
+  background: #00c853;
+  box-shadow: 0 0 10px #00c853;
+}
