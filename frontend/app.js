@@ -1,7 +1,22 @@
+import {
+  initAudio,
+  toggleMute,
+  enablePushToTalk,
+  startTalking,
+  stopTalking,
+  createPeer,
+  handleSignal
+} from "./webrtc.js";
+
 const socket = io("https://TON_BACKEND_RENDER");
 
-let localStream;
-let peers = {};
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") startTalking();
+});
+
+document.addEventListener("keyup", e => {
+  if (e.code === "Space") stopTalking();
+});
 
 async function login() {
   const password = document.getElementById("password").value;
@@ -21,55 +36,36 @@ async function login() {
 }
 
 async function startCall() {
-  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  await initAudio();
 
-  socket.on("new-peer", id => createPeer(id, true));
-  socket.on("signal", data => handleSignal(data));
-  socket.on("peer-left", id => {
-    if (peers[id]) peers[id].close();
+  socket.on("new-peer", id => {
+    addUser(id);
+    createPeer(id, socket, true);
   });
+
+  socket.on("signal", data => handleSignal(data, socket));
+
+  socket.on("peer-left", id => removeUser(id));
 }
 
-function createPeer(id, initiator) {
-  const pc = new RTCPeerConnection();
-
-  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-  pc.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit("signal", { to: id, signal: e.candidate });
-    }
-  };
-
-  pc.ontrack = e => {
-    const audio = document.createElement("audio");
-    audio.srcObject = e.streams[0];
-    audio.autoplay = true;
-    document.body.appendChild(audio);
-  };
-
-  if (initiator) {
-    pc.createOffer().then(offer => {
-      pc.setLocalDescription(offer);
-      socket.emit("signal", { to: id, signal: offer });
-    });
-  }
-
-  peers[id] = pc;
+function addUser(id) {
+  const div = document.createElement("div");
+  div.id = `user-${id}`;
+  div.className = "user";
+  div.innerText = `🎧 ${id}`;
+  document.getElementById("users").appendChild(div);
 }
 
-function handleSignal({ from, signal }) {
-  const pc = peers[from] || createPeer(from, false);
-
-  if (signal.type === "offer") {
-    pc.setRemoteDescription(signal);
-    pc.createAnswer().then(answer => {
-      pc.setLocalDescription(answer);
-      socket.emit("signal", { to: from, signal: answer });
-    });
-  } else if (signal.type === "answer") {
-    pc.setRemoteDescription(signal);
-  } else {
-    pc.addIceCandidate(signal);
-  }
+function removeUser(id) {
+  document.getElementById(`user-${id}`)?.remove();
+  document.getElementById(`audio-${id}`)?.remove();
 }
+
+window.login = login;
+window.startCall = startCall;
+window.toggleMute = () => {
+  const muted = toggleMute();
+  document.getElementById("mute").innerText = muted ? "🔇" : "🔊";
+};
+
+window.togglePTT = e => enablePushToTalk(e.target.checked);
