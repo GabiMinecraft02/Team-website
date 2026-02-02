@@ -39,6 +39,12 @@ io.on("connection", socket => {
     socket.to(room).emit("new-peer", socket.id);
   });
 
+  socket.on("disconnect", () => {
+    socket.broadcast.emit("peer-left", socket.id);
+  });
+});
+
+
   socket.on("signal", data => {
     socket.to(data.to).emit("signal", {
       from: socket.id,
@@ -54,3 +60,4 @@ io.on("connection", socket => {
 server.listen(3000, () =>
   console.log("Backend sur :3000")
 );
+
